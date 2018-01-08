@@ -7,9 +7,12 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.*;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import ru.dinis.db.interfaces.MP3Dao;
+import ru.dinis.db.objects.Author;
 import ru.dinis.db.objects.MP3;
 
 import javax.sql.DataSource;
@@ -25,6 +28,9 @@ import java.util.TreeMap;
 @Component("sqliteDao")
 public class SQLiteDao implements MP3Dao {
 
+    private static final String MP3TABLE = "mp3";
+    private static final String MP3_VIEW = "mp3_view";
+
     private NamedParameterJdbcTemplate jdbcTemplate;
 
     private SimpleJdbcInsert insertMP3;
@@ -38,24 +44,27 @@ public class SQLiteDao implements MP3Dao {
 
     @Override
     public void insert(MP3 mp3) {
-        String sql = "insert into mp3 (name, author) values(:name, :author)";
+        String sqlInsertAuthor = "INSERT INTO author(name) VALUES(:name)";
         MapSqlParameterSource params = new MapSqlParameterSource();
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        params.addValue("name", mp3.getAuthor());
+        this.jdbcTemplate.update(sqlInsertAuthor, params, keyHolder);
+
+        String sqlInsertMp3 = "insert into mp3 (name, author_id) values(:name, :author_id)";
+        params = new MapSqlParameterSource();
         params.addValue("name", mp3.getName());
-        params.addValue("author", mp3.getAuthor());
-
-//        this.jdbcTemplate.update(sql, params);
-
-        SqlParameterSource parameters = new BeanPropertySqlParameterSource(mp3);
-        this.insertMP3.execute(params);
+        params.addValue("author_id", keyHolder.getKey().intValue());
+        this.jdbcTemplate.update(sqlInsertMp3, params);
     }
 
     @Override
     public void insert(List<MP3> mp3List) {
-//        for (MP3 mp3 : mp3List) {
-//            this.insert(mp3);
-//        }
-        String sql = "INSERT INTO mp3 (name, author) VALUES(:name, :author)";
-        System.out.println(this.jdbcTemplate.batchUpdate(sql, SqlParameterSourceUtils.createBatch(mp3List)).length);
+        for (MP3 mp3 : mp3List) {
+            this.insert(mp3);
+        }
+//        String sql = "INSERT INTO mp3 (name, author) VALUES(:name, :author)";
+//        System.out.println(this.jdbcTemplate.batchUpdate(sql, SqlParameterSourceUtils.createBatch(mp3List)).length);
     }
 
     @Override
@@ -90,25 +99,25 @@ public class SQLiteDao implements MP3Dao {
 
     @Override
     public MP3 getMP3ById(int id) {
-        String sql = "SELECT * FROM mp3 WHERE id=:id";
+        String sql = "SELECT * FROM " + MP3_VIEW + " WHERE mp3_id=:mp3_id";
         MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("id", id);
+        params.addValue("mp3_id", id);
         return this.jdbcTemplate.queryForObject(sql, params, new MP3RowMapper());
     }
 
     @Override
     public List<MP3> getMP3ListByName(String name) {
-        String sql = "SELECT * FROM mp3 WHERE upper(name) LIKE :name";
+        String sql = "SELECT * FROM mp3_view WHERE upper(mp3_name) LIKE :mp3_name";
         MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("name", "%" + name.toUpperCase() + "%");
+        params.addValue("mp3_name", "%" + name.toUpperCase() + "%");
         return this.jdbcTemplate.query(sql, params, new MP3RowMapper());
     }
 
     @Override
     public List<MP3> getMP3ListByAuthor(String author) {
-        String sql = "SELECT * FROM mp3 WHERE upper(author) LIKE :author";
+        String sql = "SELECT * FROM mp3_view WHERE upper(author_name) LIKE :author_name";
         MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("author", "%" + author.toUpperCase() + "%");
+        params.addValue("author_name", "%" + author.toUpperCase() + "%");
         return this.jdbcTemplate.query(sql, params, new MP3RowMapper());
     }
 
@@ -120,7 +129,7 @@ public class SQLiteDao implements MP3Dao {
 
     @Override
     public void allShow() {
-        String sql = "SELECT * FROM mp3";
+        String sql = "SELECT * FROM mp3_view";
         List<MP3> list = this.jdbcTemplate.query(sql, new MP3RowMapper());
         for (MP3 mp3 : list) {
             System.out.println(mp3);
@@ -140,7 +149,7 @@ public class SQLiteDao implements MP3Dao {
     }
 
     public Map<String, Integer> getStat() {
-        String sql = "SELECT author, count(*) as count FROM mp3 group by author";
+        String sql = "SELECT author_name, count(*) as count FROM mp3_view group by author_name";
         final Map<String, Integer> map = new TreeMap<String, Integer>();
 
         return this.jdbcTemplate.query(sql, new ResultSetExtractor<Map<String, Integer>>() {
@@ -148,7 +157,7 @@ public class SQLiteDao implements MP3Dao {
             @Override
             public Map<String, Integer> extractData(ResultSet resultSet) throws SQLException, DataAccessException {
                 while (resultSet.next()) {
-                    String author = resultSet.getString("author");
+                    String author = resultSet.getString("author_name");
                     Integer count = resultSet.getInt("count");
                     map.put(author, count);
                 }
@@ -161,10 +170,14 @@ public class SQLiteDao implements MP3Dao {
         @Nullable
         @Override
         public MP3 mapRow(ResultSet resultSet, int i) throws SQLException {
+            Author author = new Author();
+            author.setId(resultSet.getInt("author_id"));
+            author.setName(resultSet.getString("author_name"));
+
             MP3 mp3 = new MP3();
-            mp3.setId(resultSet.getInt("id"));
-            mp3.setName(resultSet.getString("name"));
-            mp3.setAuthor(resultSet.getString("author"));
+            mp3.setId(resultSet.getInt("mp3_id"));
+            mp3.setName(resultSet.getString("mp3_name"));
+            mp3.setAuthor(resultSet.getString("author_name"));
             return mp3;
         }
     }
