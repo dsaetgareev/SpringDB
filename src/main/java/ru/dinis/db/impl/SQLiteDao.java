@@ -11,6 +11,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import ru.dinis.db.interfaces.MP3Dao;
 import ru.dinis.db.objects.Author;
 import ru.dinis.db.objects.MP3;
@@ -43,6 +44,7 @@ public class SQLiteDao implements MP3Dao {
     }
 
     @Override
+    @Transactional
     public void insert(MP3 mp3) {
         String sqlInsertAuthor = "INSERT INTO author(name) VALUES(:name)";
         MapSqlParameterSource params = new MapSqlParameterSource();

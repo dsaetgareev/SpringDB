@@ -19,7 +19,7 @@ public class Start {
         ApplicationContext context = new ClassPathXmlApplicationContext("context.xml");
         MP3Dao mp3Dao = (MP3Dao) context.getBean("sqliteDao");
         Author author = new Author("lube");
-        MP3 mp3 = new MP3("kony", author.getName());
+        MP3 mp3 = new MP3("beresy", author.getName());
         mp3Dao.insert(mp3);
         mp3Dao.allShow();
     }
