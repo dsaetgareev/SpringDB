@@ -5,8 +5,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.lang.Nullable;
@@ -29,9 +32,13 @@ public class SQLiteDao implements MP3Dao {
 
     private NamedParameterJdbcTemplate jdbcTemplate;
 
+    private SimpleJdbcInsert insertMP3;
+
     @Autowired
     public void setDataSource(DataSource dataSource) {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
+        this.insertMP3 = new SimpleJdbcInsert(dataSource).withTableName("mp3").usingColumns("name", "author");
+
     }
 
     @Override
@@ -41,7 +48,10 @@ public class SQLiteDao implements MP3Dao {
         params.addValue("name", mp3.getName());
         params.addValue("author", mp3.getAuthor());
 
-        this.jdbcTemplate.update(sql, params);
+//        this.jdbcTemplate.update(sql, params);
+
+        SqlParameterSource parameters = new BeanPropertySqlParameterSource(mp3);
+        this.insertMP3.execute(params);
     }
 
     @Override

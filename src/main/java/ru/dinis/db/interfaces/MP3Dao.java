@@ -24,4 +24,6 @@ public interface MP3Dao {
     List<MP3> getMP3ListByAuthor(String author);
 
     int getMP3Count();
+    void allShow();
+    void showList(List<MP3> list);
 }
