@@ -5,13 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.core.namedparam.*;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import ru.dinis.db.interfaces.MP3Dao;
@@ -56,14 +51,16 @@ public class SQLiteDao implements MP3Dao {
 
     @Override
     public void insert(List<MP3> mp3List) {
-        for (MP3 mp3 : mp3List) {
-            this.insert(mp3);
-        }
+//        for (MP3 mp3 : mp3List) {
+//            this.insert(mp3);
+//        }
+        String sql = "INSERT INTO mp3 (name, author) VALUES(:name, :author)";
+        System.out.println(this.jdbcTemplate.batchUpdate(sql, SqlParameterSourceUtils.createBatch(mp3List)).length);
     }
 
     @Override
     public void delete(int id) {
-        String sql = "delete from mp3 where id=:id";
+        String sql = "DELETE FROM mp3 WHERE id=:id";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("id", id);
 
@@ -76,6 +73,22 @@ public class SQLiteDao implements MP3Dao {
     }
 
     @Override
+    public void deleteByAuthor(String author) {
+        String sql = "DELETE FROM mp3 WHERE author=:author";
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("author", author);
+        System.out.println(this.jdbcTemplate.update(sql, params));
+    }
+
+    @Override
+    public void deleteByName(String name) {
+        String sql = "DELETE FROM mp3 WHERE name=:name";
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("name", name);
+        this.jdbcTemplate.update(sql, params);
+    }
+
+    @Override
     public MP3 getMP3ById(int id) {
         String sql = "SELECT * FROM mp3 WHERE id=:id";
         MapSqlParameterSource params = new MapSqlParameterSource();
@@ -85,7 +98,7 @@ public class SQLiteDao implements MP3Dao {
 
     @Override
     public List<MP3> getMP3ListByName(String name) {
-        String sql = "SELECT * FROM mp3 WHERE upper(name) like :name";
+        String sql = "SELECT * FROM mp3 WHERE upper(name) LIKE :name";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("name", "%" + name.toUpperCase() + "%");
         return this.jdbcTemplate.query(sql, params, new MP3RowMapper());
@@ -93,7 +106,7 @@ public class SQLiteDao implements MP3Dao {
 
     @Override
     public List<MP3> getMP3ListByAuthor(String author) {
-        String sql = "SELECT * FROM mp3 WHERE upper(author) like :author";
+        String sql = "SELECT * FROM mp3 WHERE upper(author) LIKE :author";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("author", "%" + author.toUpperCase() + "%");
         return this.jdbcTemplate.query(sql, params, new MP3RowMapper());
@@ -105,12 +118,19 @@ public class SQLiteDao implements MP3Dao {
         return this.jdbcTemplate.getJdbcOperations().queryForObject(sql, Integer.class);
     }
 
+    @Override
     public void allShow() {
         String sql = "SELECT * FROM mp3";
         List<MP3> list = this.jdbcTemplate.query(sql, new MP3RowMapper());
         for (MP3 mp3 : list) {
             System.out.println(mp3);
         }
+    }
+
+    @Override
+    public void updateById(List<MP3> list) {
+        String sql = "UPDATE mp3 SET name=:name, author=:author WHERE id=:id";
+        this.jdbcTemplate.batchUpdate(sql, SqlParameterSourceUtils.createBatch(list));
     }
 
     public void showList(List<MP3> list) {
