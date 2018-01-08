@@ -46,4 +46,9 @@ public class MP3 {
     public void setId(int id) {
         this.id = id;
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s, %s, %s", this.id, this.name, this.author);
+    }
 }

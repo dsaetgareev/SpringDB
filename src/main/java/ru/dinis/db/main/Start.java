@@ -15,11 +15,15 @@ public class Start {
         ApplicationContext context = new ClassPathXmlApplicationContext("context.xml");
 
         MP3 mp3 = new MP3();
-        mp3.setName("tuman");
-        mp3.setAuthor("Gazmanov");
+        mp3.setName("soldat");
+        mp3.setAuthor("Lube");
 
         SQLiteDao sqLiteDao = (SQLiteDao) context.getBean("sqliteDao");
-        sqLiteDao.insert(mp3);
+//        sqLiteDao.insert(mp3);
+//        sqLiteDao.allShow();
+        System.out.println(sqLiteDao.getMP3Count());
+//        sqLiteDao.showList(sqLiteDao.getMP3ListByAuthor("Lube"));
+        System.out.println(sqLiteDao.getStat());
     }
 
 }
