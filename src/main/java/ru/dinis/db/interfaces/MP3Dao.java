@@ -1,5 +1,6 @@
 package ru.dinis.db.interfaces;
 
+import ru.dinis.db.objects.Author;
 import ru.dinis.db.objects.MP3;
 
 import java.util.List;
@@ -10,6 +11,8 @@ import java.util.List;
 public interface MP3Dao {
 
     void insert(MP3 mp3);
+
+    int insertAuthor(Author author);
 
     void insert(List<MP3> mp3List);
 
