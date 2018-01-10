@@ -1,6 +1,7 @@
 package ru.dinis.db.impl;
 
 
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -48,10 +49,7 @@ public class SQLiteDao implements MP3Dao {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.SERIALIZABLE, timeout = 1)
     public void insert(MP3 mp3) {
-
-        System.out.println(TransactionSynchronizationManager.isActualTransactionActive());
         MapSqlParameterSource params = new MapSqlParameterSource();
 
         String sqlInsertMp3 = "INSERT INTO mp3 (name, author_id) VALUES(:name, :author_id)";
@@ -59,15 +57,13 @@ public class SQLiteDao implements MP3Dao {
         params.addValue("name", mp3.getName());
         params.addValue("author_id", author_id);
         this.jdbcTemplate.update(sqlInsertMp3, params);
+
     }
     @Override
-    @Transactional(propagation = Propagation.REQUIRED)
     public int insertAuthor(Author author) {
-        System.out.println(TransactionSynchronizationManager.isActualTransactionActive());
         String sql = "INSERT INTO author (name) VALUES(:name)";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("name", author.getName());
-
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         this.jdbcTemplate.update(sql, params, keyHolder);
